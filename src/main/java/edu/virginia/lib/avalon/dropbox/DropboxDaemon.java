@@ -108,7 +108,7 @@ public class DropboxDaemon {
      * or created. 
      */
     private File getPresDir(final File watchDir) {
-        Matcher m = Pattern.compile("(\\d+)_.*").matcher(watchDir.getName());
+        Matcher m = Pattern.compile("([^_]+)_.*").matcher(watchDir.getName());
         if (m.matches()) {
             final File result = new File(presRoot, m.group(1));
             result.mkdirs();

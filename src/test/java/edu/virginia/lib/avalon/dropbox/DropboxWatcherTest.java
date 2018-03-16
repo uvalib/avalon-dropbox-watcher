@@ -5,10 +5,12 @@ import java.io.IOException;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class DropboxWatcherTest {
 
+    @Ignore // This test can't involve waiting for a minute
     @Test
     public void testFileCheck() throws IOException, InterruptedException {
         File watch = new File(File.createTempFile("test", "test").getParent(), "src");
@@ -23,7 +25,7 @@ public class DropboxWatcherTest {
         final String testData = "test data";
         FileUtils.write(new File(watch, "file.mp4"), testData);
         FileUtils.write(new File(watch, "file.mp4.md5"), DigestUtils.md5Hex(testData));
-        Thread.sleep(120000);
+        Thread.sleep(60000);
         dw.shutdown();
     }
     
