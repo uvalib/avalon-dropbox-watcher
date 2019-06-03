@@ -72,7 +72,7 @@ public class DropboxWatcher {
         moverThread.join();
     }
 
-    Pattern WINDOWS_MD5_FILE = Pattern.compile("MD5 hash of file.*([0-9a-f][0-9a-f]( [0-9a-f][0-9a-f]){15}+).*", Pattern.DOTALL);
+    Pattern WINDOWS_MD5_FILE = Pattern.compile("MD5 hash of .*([0-9a-f][0-9a-f]([0-9a-f][0-9a-f]){15}+).*", Pattern.DOTALL);
     Pattern DEFAULT_MD5 = Pattern.compile(".*([0-9a-f]{32}).*");
     
     /**
@@ -115,7 +115,7 @@ public class DropboxWatcher {
                 if (m.matches()) {
                     providedChecksum = m.group(1);
                 }
-            }
+            } 
             try {
                 digest = MessageDigest.getInstance("MD5");
             } catch (NoSuchAlgorithmException e) {
