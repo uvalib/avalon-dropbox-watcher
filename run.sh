@@ -17,4 +17,4 @@ esac
 JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk.x86_64
 export JAVA_HOME
 
-mvn clean compile exec:java -Dexec.mainClass=edu.virginia.lib.avalon.dropbox.DropboxDaemon -Dexec.args="/lib_content60/avalon/dropbox /lib_content67/AVALON_archive"
+mvn clean compile exec:java -Dexec.mainClass=edu.virginia.lib.avalon.dropbox.DropboxDaemon -Dexec.args="/lib_content114/avalon/dropbox /lib_content112/AVALON_archive"
