@@ -80,8 +80,11 @@ public class DropboxWatcher {
      * worth the time (which involves copying and computing a checksum) a file must:
      * 1.  have a checksum file
      * 2.  not have been processed since the last change to either the file or the checksum
+     * 3.  the filename does not end in '.log" or ".md5"
      */
     boolean isFileEligibleForProcessing(final File file) {
+        if (file.getName().endsWith(".log")) return false;
+        if (file.getName().endsWith(".md5")) return false;
         final File logFile = new File(file.getParent(), file.getName() + ".log");
         final File md5File = getBestMD5File(file);
         if (logFile.exists() && md5File.exists() && logFile.lastModified() > md5File.lastModified() && logFile.lastModified() > file.lastModified()) {
@@ -93,7 +96,7 @@ public class DropboxWatcher {
     
     private File getBestMD5File(final File file) {
         File md5File = new File(file.getParent(), file.getName() + ".md5");
-        if (md5File.exists()) {
+        if (!md5File.exists() && file.getName().indexOf('.') > 0) {
             md5File = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".md5");
         }
         return md5File;
@@ -104,7 +107,6 @@ public class DropboxWatcher {
      * 
      * 1.  check to make sure there's a checksum file
      * 2.  copying the file to a temporary location in the preservation  storage and computing the checksum
-     * 3.  if the checksum matches, move the original to its final spot and delete the original.
      * @throws IOException 
      * @throws NoSuchAlgorithmException 
      */
