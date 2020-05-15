@@ -82,13 +82,21 @@ public class DropboxWatcher {
      * 2.  not have been processed since the last change to either the file or the checksum
      */
     boolean isFileEligibleForProcessing(final File file) {
-        final File md5File = new File(file.getParent(), file.getName() + ".md5");
         final File logFile = new File(file.getParent(), file.getName() + ".log");
+        final File md5File = getBestMD5File(file);
         if (logFile.exists() && md5File.exists() && logFile.lastModified() > md5File.lastModified() && logFile.lastModified() > file.lastModified()) {
             // Skip this file because it was processed and a message was logged and nothing has changed since then...
             return false;
         } 
         return file.exists() && md5File.exists();
+    }
+    
+    private File getBestMD5File(final File file) {
+        File md5File = new File(file.getParent(), file.getName() + ".md5");
+        if (md5File.exists()) {
+            md5File = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".md5");
+        }
+        return md5File;
     }
     
     /**
@@ -104,7 +112,7 @@ public class DropboxWatcher {
         long modificationDate = file.lastModified();
         String providedChecksum = null;
         MessageDigest digest = null;
-        final File md5File = new File(file.getParent(), file.getName() + ".md5");
+        final File md5File = getBestMD5File(file);
         if (md5File.exists()) {
             providedChecksum = FileUtils.readFileToString(md5File).trim();
             Matcher m = WINDOWS_MD5_FILE.matcher(providedChecksum);
