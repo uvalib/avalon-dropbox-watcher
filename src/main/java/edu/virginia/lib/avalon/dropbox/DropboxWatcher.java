@@ -86,6 +86,9 @@ public class DropboxWatcher {
         if (file.getName().endsWith(".log")) return false;
         if (file.getName().endsWith(".md5")) return false;
         final File logFile = new File(file.getParent(), file.getName() + ".log");
+        
+        if (file.getParentFile().getName().equals("2011_Robertson_Media_Center_Streaming_Content") && isFullyUploadedMediaFile(file)) return true;
+        
         final File md5File = getBestMD5File(file);
         if (logFile.exists() && md5File.exists() && logFile.lastModified() > md5File.lastModified() && logFile.lastModified() > file.lastModified()) {
             // Skip this file because it was processed and a message was logged and nothing has changed since then...
@@ -100,6 +103,12 @@ public class DropboxWatcher {
             md5File = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".md5");
         }
         return md5File;
+    }
+    
+    // if it hasn't been modified in 15 seconds and is over 1 megabyte it's probably a media file
+    public static boolean isFullyUploadedMediaFile(final File file) {
+        if (file.getName().endsWith(".txt") || file.getName().endsWith(".md5")) return false;
+        return ((file.lastModified() + 15000) < System.currentTimeMillis() && (file.length() > 1000000));
     }
     
     /**
