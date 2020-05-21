@@ -124,7 +124,8 @@ public class DropboxWatcher {
         String providedChecksum = null;
         MessageDigest digest = null;
         final File md5File = getBestMD5File(file);
-        if (md5File.exists()) {
+        final boolean skipChecksum = isFullyUploadedMediaFile(file);
+        if (md5File.exists() || skipChecksum) {
             providedChecksum = FileUtils.readFileToString(md5File).trim();
             Matcher m = WINDOWS_MD5_FILE.matcher(providedChecksum);
             if (m.matches()) {
@@ -163,24 +164,26 @@ public class DropboxWatcher {
                 IOUtils.copy(fis,  dos);
                 dos.close();
                 LOGGER.info("  " + file.getAbsolutePath() + " copied to " + preservationDirectory.getPath() + ".");
-                final String digestHex = toHexString(dos.getMessageDigest().digest());
-                if (digestHex.equalsIgnoreCase(providedChecksum)) {
-                    if (file.lastModified() != modificationDate) {
-                        LOGGER.info("  " + file.getAbsolutePath() + " modified, transaction cancelled.");
-                        destinationTempFile.delete();
-                        return false;
-                    } else {
-                        if (!destinationTempFile.renameTo(destinationFile)) {
-                            throw new RuntimeException("Unable to move " + destinationTempFile.getPath() + " to " + destinationFile.getPath() + "!");
+                if (!skipChecksum) {
+                    final String digestHex = toHexString(dos.getMessageDigest().digest());
+                    if (digestHex.equalsIgnoreCase(providedChecksum)) {
+                        if (file.lastModified() != modificationDate) {
+                            LOGGER.info("  " + file.getAbsolutePath() + " modified, transaction cancelled.");
+                            destinationTempFile.delete();
+                            return false;
+                        } else {
+                            if (!destinationTempFile.renameTo(destinationFile)) {
+                                throw new RuntimeException("Unable to move " + destinationTempFile.getPath() + " to " + destinationFile.getPath() + "!");
+                            }
+                            file.delete();
+                            LOGGER.info("  " + file.getAbsolutePath() + " deleted from " + dropboxDirectory.getPath() + ".");
+                            return true;
                         }
-                        file.delete();
-                        LOGGER.info("  " + file.getAbsolutePath() + " deleted from " + dropboxDirectory.getPath() + ".");
-                        return true;
+                    } else {
+                        destinationTempFile.delete();
+                        LOGGER.info("  " + file.getAbsolutePath() + " had a checksum mismatch: transaction cancelled.");
+                        throw new RuntimeException("Checksum mismatch for " + file.getName() + "! (" + providedChecksum + " != " + digestHex + ")");
                     }
-                } else {
-                    destinationTempFile.delete();
-                    LOGGER.info("  " + file.getAbsolutePath() + " had a checksum mismatch: transaction cancelled.");
-                    throw new RuntimeException("Checksum mismatch for " + file.getName() + "! (" + providedChecksum + " != " + digestHex + ")");
                 }
             } finally {
                 fis.close();
