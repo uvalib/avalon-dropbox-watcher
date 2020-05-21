@@ -184,6 +184,8 @@ public class DropboxWatcher {
                         LOGGER.info("  " + file.getAbsolutePath() + " had a checksum mismatch: transaction cancelled.");
                         throw new RuntimeException("Checksum mismatch for " + file.getName() + "! (" + providedChecksum + " != " + digestHex + ")");
                     }
+                } else {
+                    return true;
                 }
             } finally {
                 fis.close();
