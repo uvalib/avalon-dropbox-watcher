@@ -86,6 +86,7 @@ public class DropboxWatcher {
         if (file.getName().endsWith(".log")) return false;
         if (file.getName().endsWith(".md5")) return false;
         final File logFile = new File(file.getParent(), file.getName() + ".log");
+        if (logFile.exists() && logFile.lastModified() > file.lastModified()) return false;
         
         if (file.getParentFile().getName().equals("2011_Robertson_Media_Center_Streaming_Content") && isFullyUploadedMediaFile(file)) return true;
         
@@ -188,6 +189,11 @@ public class DropboxWatcher {
                         throw new RuntimeException("Checksum mismatch for " + file.getName() + "! (" + providedChecksum + " != " + digestHex + ")");
                     }
                 } else {
+                    if (!destinationTempFile.renameTo(destinationFile)) {
+                        throw new RuntimeException("Unable to move " + destinationTempFile.getPath() + " to " + destinationFile.getPath() + "!");
+                    }
+                    file.delete();
+                    LOGGER.info("  " + file.getAbsolutePath() + " deleted from " + dropboxDirectory.getPath() + ".");
                     return true;
                 }
             } finally {
@@ -241,7 +247,9 @@ public class DropboxWatcher {
             } else {
                 if (isFileEligibleForProcessing(f)) {
                     synchronized (fileQueue) {
-                        fileQueue.add(f);
+                        if (!fileQueue.contains(f)) {
+                            fileQueue.add(f);
+                        }
                     }
                 }
             }
