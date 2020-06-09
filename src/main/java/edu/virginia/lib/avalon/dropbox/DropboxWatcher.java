@@ -123,9 +123,15 @@ public class DropboxWatcher {
         long modificationDate = file.lastModified();
         String providedChecksum = null;
         MessageDigest digest = null;
+        try {
+           digest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+           throw new RuntimeException(e.getMessage());
+        }
+
         final File md5File = getBestMD5File(file);
         final boolean skipChecksum = isFullyUploadedMediaFile(file);
-        if (md5File.exists() || skipChecksum) {
+        if (md5File.exists() || !skipChecksum) {
             providedChecksum = FileUtils.readFileToString(md5File).trim();
             Matcher m = WINDOWS_MD5_FILE.matcher(providedChecksum);
             if (m.matches()) {
@@ -136,11 +142,8 @@ public class DropboxWatcher {
                     providedChecksum = m.group(1);
                 }
             } 
-            try {
-                digest = MessageDigest.getInstance("MD5");
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e.getMessage());
-            }
+        } else if (skipChecksum) {
+            LOGGER.info("  Skipping checksum validation of " + file.getAbsolutePath() + ".");
         } else {
             // no support for other digest formats yet
             LOGGER.info("  No checksum file \"" + md5File + "\" found for " + file.getAbsolutePath() + ".");
@@ -163,9 +166,9 @@ public class DropboxWatcher {
             try {
                 IOUtils.copy(fis,  dos);
                 dos.close();
-                LOGGER.info("  " + file.getAbsolutePath() + " copied to " + preservationDirectory.getPath() + ".");
+                final String digestHex = toHexString(dos.getMessageDigest().digest());
+                LOGGER.info("  " + file.getAbsolutePath() + " copied to " + preservationDirectory.getPath() + ". (" + digestHex + ")");
                 if (!skipChecksum) {
-                    final String digestHex = toHexString(dos.getMessageDigest().digest());
                     if (digestHex.equalsIgnoreCase(providedChecksum)) {
                         if (file.lastModified() != modificationDate) {
                             LOGGER.info("  " + file.getAbsolutePath() + " modified, transaction cancelled.");
@@ -332,9 +335,10 @@ public class DropboxWatcher {
                                // fall through, it'll get moved next time
                            }
                        } catch (RuntimeException e) {
-                           appendToErrorLog(f, e.getMessage() == null ? "Unexepcted error!" : e.getMessage());
+                           e.printStackTrace();
+                           appendToErrorLog(f, e.getMessage() == null ? "Unexpected error!" : e.getMessage());
                        } catch (IOException e) {
-                           appendToErrorLog(f, e.getMessage() == null ? "Unexepcted error!" : e.getMessage());
+                           appendToErrorLog(f, e.getMessage() == null ? "Unexpected error!" : e.getMessage());
                            LOGGER.error("IO Exception while copying " + f.getName() + "!", e);
                            synchronized(fileQueue) {
                                fileQueue.add(f);
