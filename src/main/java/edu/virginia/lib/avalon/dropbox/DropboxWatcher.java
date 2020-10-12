@@ -155,7 +155,7 @@ public class DropboxWatcher {
         if (destinationFile.exists()) {
             throw new RuntimeException("  A file with the name " + file.getName() + " already exists in the preservation store.");
         }
-        File destinationTempFile = new File(tempDirectory, UUID.randomUUID().toString());
+        final File destinationTempFile = new File(tempDirectory, UUID.randomUUID().toString());
         if (destinationTempFile.exists()) {
             throw new RuntimeException("  A file with the name " + destinationTempFile.getName() + " already exists in the temp directory.");
         }
@@ -200,7 +200,14 @@ public class DropboxWatcher {
                 fis.close();
             }
         } finally {
-            dos.close();
+            try {
+                dos.close();
+            } catch (Throwable t) {
+                LOGGER.error("Error closing file stream.", t);
+            }
+            if (destinationTempFile.exists()) {
+                destinationTempFile.delete();
+            }
         }
     }
     
